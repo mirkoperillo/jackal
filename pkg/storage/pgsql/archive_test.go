@@ -90,8 +90,8 @@ func TestPgSQLArchive_FetchArchiveMetadata(t *testing.T) {
 }
 
 func TestPgSQLArchive_FetchArchiveMessages(t *testing.T) {
-	starTm := time.Date(2022, time.July, 6, 14, 7, 43, 167051000, time.UTC)
-	endTm := time.Date(2023, time.July, 7, 15, 7, 43, 167051000, time.UTC)
+	starTm := time.Date(2022, time.July, 6, 14, 7, 43, 325589, time.UTC)
+	endTm := time.Date(2023, time.July, 7, 15, 7, 43, 325589, time.UTC)
 
 	tcs := map[string]struct {
 		filters     *archivemodel.Filters
