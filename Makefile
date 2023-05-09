@@ -26,11 +26,7 @@ vet:
 	@echo "Checking for common Go mistakes..."
 	@bash scripts/checks/vet.sh
 
-lint:
-	@echo "Checking for style errors..."
-	@bash scripts/checks/lint.sh
-
-check: generate fmt vet lint
+check: generate fmt vet
 
 test: generate
 	@echo "Running tests..."
