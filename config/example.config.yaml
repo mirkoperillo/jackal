@@ -146,6 +146,8 @@ modules:
 #    queue_size: 1500
 #
 
+# others available modules:
+# - http_upload # XEP-0363: HTTP File Upload
 components:
   secret: a-super-secret-key
   listeners:
