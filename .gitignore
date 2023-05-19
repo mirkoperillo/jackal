@@ -54,4 +54,5 @@ requirements.lock
 
 # Jackal binary
 jackal
+jackalctl
 
