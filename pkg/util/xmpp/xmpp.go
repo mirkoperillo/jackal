@@ -109,3 +109,7 @@ func MakeForwardedStanza(stanza stravaganza.Stanza, stamp *time.Time) stravaganz
 	}
 	return b.Build()
 }
+
+func IsNamespaceAttr(attr stravaganza.Attribute) bool {
+	return attr.Label == stravaganza.Namespace
+}
