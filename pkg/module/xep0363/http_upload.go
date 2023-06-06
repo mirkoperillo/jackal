@@ -2,6 +2,10 @@ package xep0363
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"strconv"
 
 	kitlog "github.com/go-kit/log"
@@ -10,6 +14,7 @@ import (
 	stanzaerror "github.com/jackal-xmpp/stravaganza/errors/stanza"
 	"github.com/ortuman/jackal/pkg/cluster/resourcemanager"
 	"github.com/ortuman/jackal/pkg/hook"
+	httpServer "github.com/ortuman/jackal/pkg/httpserver"
 	"github.com/ortuman/jackal/pkg/router"
 	"github.com/ortuman/jackal/pkg/storage/repository"
 	xmpputil "github.com/ortuman/jackal/pkg/util/xmpp"
@@ -27,26 +32,36 @@ const (
 
 // HttpUpload represents http_upload (XEP-0363) module type.
 type HttpUpload struct {
-	rep repository.Repository
+	config Config
+	rep    repository.Repository
 	//hosts  hosts
-	router router.Router
-	resMng resourcemanager.Manager
-	hk     *hook.Hooks
-	logger kitlog.Logger
+	httpServer *httpServer.HttpServer
+	router     router.Router
+	resMng     resourcemanager.Manager
+	hk         *hook.Hooks
+	logger     kitlog.Logger
+}
+
+type Config struct {
+	StorageFolder string `fig:"storage_folder"`
 }
 
 // New returns a new initialized BlockList instance.
 func New(
+	config Config,
 	router router.Router,
 	//hosts *host.Hosts,
+	httpServer *httpServer.HttpServer,
 	resMng resourcemanager.Manager,
 	rep repository.Repository,
 	hk *hook.Hooks,
 	logger kitlog.Logger,
 ) *HttpUpload {
 	return &HttpUpload{
-		rep:    rep,
-		router: router,
+		config:     config,
+		rep:        rep,
+		httpServer: httpServer,
+		router:     router,
 		//hosts:  hosts,
 		resMng: resMng,
 		hk:     hk,
@@ -56,6 +71,34 @@ func New(
 
 func (m *HttpUpload) Start(ctx context.Context) error {
 	level.Info(m.logger).Log("msg", "started http_upload module")
+	pathFolder := m.config.StorageFolder
+	_, err := os.Stat(pathFolder)
+	if os.IsNotExist(err) {
+		level.Info(m.logger).Log("msg", fmt.Sprintf("storage folder %s not exist, creating...", pathFolder))
+		err := os.MkdirAll(pathFolder, 0700)
+		if err != nil {
+			level.Error(m.logger).Log("msg", fmt.Sprintf("error creating storage folder: %s", err))
+		}
+	} else {
+		level.Info(m.logger).Log("msg", fmt.Sprintf("storage folder %s", pathFolder))
+	}
+
+	m.httpServer.Register("/upload", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "PUT" {
+			level.Warn(m.logger).Log("msg", fmt.Sprintf("unsupported method %s for /upload enpoint", r.Method))
+			return
+		}
+		fileContent, err := io.ReadAll(r.Body)
+		if err != nil {
+			level.Error(m.logger).Log("msg", fmt.Sprintf("error reading /upload body: %s", err))
+		}
+		err = os.WriteFile(fmt.Sprintf("%s/%s", pathFolder, "myFile.txt"), fileContent, 0700)
+		if err != nil {
+			level.Error(m.logger).Log("msg", fmt.Sprintf("error saving file on storage: %s", err))
+		}
+		level.Info(m.logger).Log("msg", "/upload done")
+	})
+
 	return nil
 	// m.hk.AddHook(hook.C2SStreamElementReceived, m.onElementRecv, hook.DefaultPriority)
 }

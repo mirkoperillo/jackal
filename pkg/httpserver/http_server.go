@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package jackal
+package httpServer
 
 import (
 	"context"
@@ -27,31 +27,43 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-type httpServer struct {
-	port   int
-	srv    *http.Server
-	logger kitlog.Logger
+type HttpServer struct {
+	port     int
+	srv      *http.Server
+	mux      *http.ServeMux
+	logger   kitlog.Logger
+	handlers map[string]http.HandlerFunc
 }
 
-func newHTTPServer(port int, logger kitlog.Logger) *httpServer {
-	return &httpServer{port: port, logger: logger}
+func NewHTTPServer(port int, logger kitlog.Logger) *HttpServer {
+	return &HttpServer{port: port, logger: logger, handlers: make(map[string]http.HandlerFunc)}
 }
 
-func (h *httpServer) Start(_ context.Context) error {
-	mux := http.NewServeMux()
-	mux.Handle("/metrics", promhttp.HandlerFor(
+func (h *HttpServer) Register(endpoint string, handler func(http.ResponseWriter, *http.Request)) {
+	h.handlers[endpoint] = http.HandlerFunc(handler)
+}
+
+func (h *HttpServer) Start(_ context.Context) error {
+	h.mux = http.NewServeMux()
+	h.mux.Handle("/metrics", promhttp.HandlerFor(
 		prometheus.DefaultGatherer,
 		promhttp.HandlerOpts{EnableOpenMetrics: true},
 	))
-	mux.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
-	mux.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
-	mux.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
-	mux.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
-	mux.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
+	h.mux.Handle("/debug/pprof/", http.HandlerFunc(pprof.Index))
+	h.mux.Handle("/debug/pprof/cmdline", http.HandlerFunc(pprof.Cmdline))
+	h.mux.Handle("/debug/pprof/profile", http.HandlerFunc(pprof.Profile))
+	h.mux.Handle("/debug/pprof/symbol", http.HandlerFunc(pprof.Symbol))
+	h.mux.Handle("/debug/pprof/trace", http.HandlerFunc(pprof.Trace))
 
-	mux.Handle("/healthz", http.HandlerFunc(h.healthCheck))
+	h.mux.Handle("/healthz", http.HandlerFunc(h.healthCheck))
 
-	h.srv = &http.Server{Handler: mux}
+	level.Debug(h.logger).Log("msg", fmt.Sprintf("registered %d handlers", len(h.handlers)))
+	for k, v := range h.handlers {
+		level.Debug(h.logger).Log("msg", "new handler ", v)
+		h.mux.Handle(k, v)
+	}
+
+	h.srv = &http.Server{Handler: h.mux}
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", h.port))
 	if err != nil {
 		return err
@@ -65,7 +77,7 @@ func (h *httpServer) Start(_ context.Context) error {
 	return nil
 }
 
-func (h *httpServer) Stop(ctx context.Context) error {
+func (h *HttpServer) Stop(ctx context.Context) error {
 	if err := h.srv.Shutdown(ctx); err != nil {
 		return err
 	}
@@ -73,7 +85,7 @@ func (h *httpServer) Stop(ctx context.Context) error {
 	return nil
 }
 
-func (h *httpServer) healthCheck(w http.ResponseWriter, r *http.Request) {
+func (h *HttpServer) healthCheck(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}

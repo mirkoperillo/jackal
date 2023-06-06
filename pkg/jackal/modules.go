@@ -123,6 +123,6 @@ var modFns = map[string]func(a *Jackal, cfg *ModulesConfig) module.Module{
 		return xep0313.New(cfg.Mam, j.router, j.hosts, j.rep, j.hk, j.logger)
 	},
 	xep0363.ModuleName: func(j *Jackal, cfg *ModulesConfig) module.Module {
-		return xep0363.New(j.router, j.resMng, j.rep, j.hk, j.logger)
+		return xep0363.New(cfg.HttpUpload, j.router, j.httpServer, j.resMng, j.rep, j.hk, j.logger)
 	},
 }

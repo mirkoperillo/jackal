@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 
 	"github.com/ortuman/jackal/pkg/module/xep0313"
+	"github.com/ortuman/jackal/pkg/module/xep0363"
 
 	"github.com/kkyr/fig"
 	adminserver "github.com/ortuman/jackal/pkg/admin/server"
@@ -100,6 +101,9 @@ type ModulesConfig struct {
 
 	// XEP-0313: Message Archive Management
 	Mam xep0313.Config `fig:"mam"`
+
+	// XEP-0363: Http File Upload
+	HttpUpload xep0363.Config `fig:"http_upload"`
 }
 
 // Config defines jackal application configuration.

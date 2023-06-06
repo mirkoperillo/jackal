@@ -145,6 +145,8 @@ modules:
 #  mam:
 #    queue_size: 1500
 #
+#  http_upload:
+#    storage_folder:
 
 # others available modules:
 # - http_upload # XEP-0363: HTTP File Upload

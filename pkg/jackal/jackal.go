@@ -43,6 +43,7 @@ import (
 	"github.com/ortuman/jackal/pkg/component/xep0114"
 	"github.com/ortuman/jackal/pkg/hook"
 	"github.com/ortuman/jackal/pkg/host"
+	httpServer "github.com/ortuman/jackal/pkg/httpserver"
 	"github.com/ortuman/jackal/pkg/log"
 	"github.com/ortuman/jackal/pkg/module"
 	streamqueue "github.com/ortuman/jackal/pkg/module/xep0198/queue"
@@ -121,8 +122,9 @@ type Jackal struct {
 	stmQueueMap    *streamqueue.QueueMap
 	extCompMng     *extcomponentmanager.Manager
 
-	starters []starter
-	stoppers []stopper
+	httpServer *httpServer.HttpServer
+	starters   []starter
+	stoppers   []stopper
 
 	waitStopCh chan os.Signal
 
@@ -220,6 +222,9 @@ func (j *Jackal) Run() error {
 		return err
 	}
 
+	// init HTTP server
+	j.httpServer = httpServer.NewHTTPServer(cfg.HTTP.Port, j.logger)
+
 	// init repository
 	if err := j.initRepository(cfg.Storage); err != nil {
 		return err
@@ -253,9 +258,8 @@ func (j *Jackal) Run() error {
 	if err := j.initListeners(cfg.C2S.Listeners, cfg.S2S.Listeners, cfg.Components.Listeners, cfg.Components.Secret); err != nil {
 		return err
 	}
-	// init HTTP server
-	j.registerStartStopper(newHTTPServer(cfg.HTTP.Port, j.logger))
 
+	j.registerStartStopper(j.httpServer)
 	if err := j.bootstrap(); err != nil {
 		return err
 	}
