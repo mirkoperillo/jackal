@@ -48,4 +48,5 @@ type baseRepository interface {
 	Roster
 	VCard
 	Locker
+	UploadSlot
 }

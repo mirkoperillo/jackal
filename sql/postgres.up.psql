@@ -192,3 +192,15 @@ CREATE INDEX IF NOT EXISTS i_archives_to_bare ON archives(to_bare);
 CREATE INDEX IF NOT EXISTS i_archives_from ON archives("from");
 CREATE INDEX IF NOT EXISTS i_archives_from_bare ON archives(from_bare);
 CREATE INDEX IF NOT EXISTS i_archives_created_at ON archives(created_at);
+
+
+-- slot_file_upload
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE IF NOT EXISTS slot_file_upload (
+    id uuid NOT NULL DEFAULT uuid_generate_v4(),
+    size INT NOT NULL,
+    content_type VARCHAR(255),
+    filename VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);

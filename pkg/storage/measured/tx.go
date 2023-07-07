@@ -27,6 +27,7 @@ type measuredTx struct {
 	repository.VCard
 	repository.Archive
 	repository.Locker
+	repository.UploadSlot
 }
 
 func newMeasuredTx(tx repository.Transaction) *measuredTx {
@@ -41,5 +42,6 @@ func newMeasuredTx(tx repository.Transaction) *measuredTx {
 		VCard:        &measuredVCardRep{rep: tx, inTx: true},
 		Archive:      &measuredArchiveRep{rep: tx, inTx: true},
 		Locker:       &measuredLocker{rep: tx, inTx: true},
+		UploadSlot:   &measuredHttpUploadRep{rep: tx, inTx: true},
 	}
 }

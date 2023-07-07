@@ -70,6 +70,7 @@ type CachedRepository struct {
 	repository.VCard
 	repository.Archive
 	repository.Locker
+	repository.UploadSlot
 
 	rep repository.Repository
 
@@ -95,6 +96,7 @@ func New(cfg Config, rep repository.Repository, logger kitlog.Logger) (repositor
 		Archive:      rep,
 		Offline:      rep,
 		Locker:       rep,
+		UploadSlot:   rep,
 		rep:          rep,
 		cache:        c,
 		logger:       logger,

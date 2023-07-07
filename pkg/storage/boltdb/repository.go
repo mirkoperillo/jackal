@@ -41,6 +41,7 @@ type Repository struct {
 	repository.VCard
 	repository.Archive
 	repository.Locker
+	repository.UploadSlot
 
 	cfg Config
 

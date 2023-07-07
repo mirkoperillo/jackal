@@ -15,6 +15,7 @@ import (
 	"github.com/ortuman/jackal/pkg/cluster/resourcemanager"
 	"github.com/ortuman/jackal/pkg/hook"
 	httpServer "github.com/ortuman/jackal/pkg/httpserver"
+	model "github.com/ortuman/jackal/pkg/model/httpupload"
 	"github.com/ortuman/jackal/pkg/router"
 	"github.com/ortuman/jackal/pkg/storage/repository"
 	xmpputil "github.com/ortuman/jackal/pkg/util/xmpp"
@@ -96,7 +97,7 @@ func (m *HttpUpload) Start(ctx context.Context) error {
 		if err != nil {
 			level.Error(m.logger).Log("msg", fmt.Sprintf("error saving file on storage: %s", err))
 		}
-		level.Info(m.logger).Log("msg", "/upload done")
+		level.Info(m.logger).Log("msg", "handled http file upload request")
 	})
 
 	return nil
@@ -144,7 +145,7 @@ func (m *HttpUpload) upload(ctx context.Context, iq *stravaganza.IQ) error {
 	// filename, size attribute required
 	var filename string
 	var filesize int
-	//var fileContentType string // optional
+	var fileContentType string // optional
 	for _, attr := range iq.Child("request").AllAttributes() {
 		if !xmpputil.IsNamespaceAttr(attr) {
 			switch attr.Label {
@@ -157,7 +158,7 @@ func (m *HttpUpload) upload(ctx context.Context, iq *stravaganza.IQ) error {
 					_, _ = m.router.Route(ctx, xmpputil.MakeErrorStanza(iq, stanzaerror.BadRequest))
 				}
 			case "content-type":
-				//fileContentType = attr.Label
+				fileContentType = attr.Label
 			default:
 				_, _ = m.router.Route(ctx, xmpputil.MakeErrorStanza(iq, stanzaerror.BadRequest))
 			}
@@ -166,8 +167,12 @@ func (m *HttpUpload) upload(ctx context.Context, iq *stravaganza.IQ) error {
 	if filename == "" || filesize == 0 {
 		// errors
 	}
-
-	m.sendReply(ctx, iq)
+	uploadSlot := model.UploadSlot{Size: filesize, Filename: filename, ContentType: fileContentType}
+	err := m.rep.InsertSlot(ctx, &uploadSlot)
+	if err != nil {
+		level.Error(m.logger).Log("msg", fmt.Sprintf("error storing request slot metadata: %s", err))
+	}
+	m.sendReply(ctx, iq, uploadSlot)
 	return nil
 
 }
@@ -184,12 +189,12 @@ func (m *HttpUpload) upload(ctx context.Context, iq *stravaganza.IQ) error {
 //     <get url='https://download.montague.tld/4a771ac1-f0b2-4a4a-9700-f2a26fa2bb67/tr%C3%A8s%20cool.jpg' />
 //   </slot>
 
-func (m *HttpUpload) sendReply(ctx context.Context, iq *stravaganza.IQ) {
+func (m *HttpUpload) sendReply(ctx context.Context, iq *stravaganza.IQ, uploadSlot model.UploadSlot) {
 	putChild := stravaganza.NewBuilder("put").
-		WithAttribute("url", "http://fakeurl.local").
+		WithAttribute("url", fmt.Sprintf("https://localhost:6060/upload/%s", uploadSlot.Id)).
 		Build()
 	getChild := stravaganza.NewBuilder("get").
-		WithAttribute("url", "http://fakeurl.local").
+		WithAttribute("url", fmt.Sprintf("https://localhost:6060/download/%s", uploadSlot.Id)).
 		Build()
 	resIQ := xmpputil.MakeResultIQ(iq, stravaganza.NewBuilder("slot").
 		WithAttribute(stravaganza.Namespace, HttpUploadNamespace).

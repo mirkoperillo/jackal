@@ -59,6 +59,7 @@ type Repository struct {
 	repository.VCard
 	repository.Archive
 	repository.Locker
+	repository.UploadSlot
 
 	host string
 	dsn  string
@@ -123,6 +124,7 @@ func (r *Repository) Start(ctx context.Context) error {
 	r.VCard = &pgSQLVCardRep{conn: db, logger: r.logger}
 	r.Archive = &pgSQLArchiveRep{conn: db, logger: r.logger}
 	r.Locker = &pgSQLLocker{conn: db}
+	r.UploadSlot = &pgSQLHttpUploadRep{conn: db, logger: r.logger}
 	return nil
 }
 

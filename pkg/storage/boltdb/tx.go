@@ -30,6 +30,7 @@ type repTx struct {
 	repository.VCard
 	repository.Archive
 	repository.Locker
+	repository.UploadSlot
 }
 
 func newRepTx(tx *bolt.Tx) *repTx {
@@ -44,5 +45,6 @@ func newRepTx(tx *bolt.Tx) *repTx {
 		VCard:        newVCardRep(tx),
 		Archive:      newArchiveRep(tx),
 		Locker:       newLockerRep(),
+		UploadSlot:   newHttpUploadRep(tx),
 	}
 }

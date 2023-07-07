@@ -29,6 +29,7 @@ type cachedTx struct {
 	repository.VCard
 	repository.Archive
 	repository.Locker
+	repository.UploadSlot
 }
 
 func newCacheTx(c Cache, tx repository.Transaction) *cachedTx {
@@ -43,5 +44,6 @@ func newCacheTx(c Cache, tx repository.Transaction) *cachedTx {
 		Archive:      tx,
 		Offline:      tx,
 		Locker:       tx,
+		UploadSlot:   tx,
 	}
 }

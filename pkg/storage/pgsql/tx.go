@@ -31,6 +31,7 @@ type repTx struct {
 	repository.VCard
 	repository.Archive
 	repository.Locker
+	repository.UploadSlot
 }
 
 func newRepTx(tx *sql.Tx) *repTx {
@@ -45,5 +46,6 @@ func newRepTx(tx *sql.Tx) *repTx {
 		VCard:        &pgSQLVCardRep{conn: tx},
 		Archive:      &pgSQLArchiveRep{conn: tx},
 		Locker:       &pgSQLLocker{conn: tx},
+		UploadSlot:   &pgSQLHttpUploadRep{conn: tx},
 	}
 }
