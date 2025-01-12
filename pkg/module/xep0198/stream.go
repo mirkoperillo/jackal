@@ -463,7 +463,7 @@ func (m *Stream) handleR(stm stream.C2S) {
 	if sq == nil {
 		return
 	}
-	level.Info(m.logger).Log("msg", "stanza ack requested",
+	level.Debug(m.logger).Log("msg", "stanza ack requested",
 		"id", stm.ID(), "username", stm.Username(), "resource", stm.Resource(),
 	)
 	a := stravaganza.NewBuilder("a").

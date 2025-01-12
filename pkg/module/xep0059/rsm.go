@@ -145,8 +145,13 @@ func GetResultSetPage[T any](rs []T, req *Request, getID func(i T) string) ([]T,
 	if err != nil {
 		return nil, nil, err
 	}
-	res.First = getID(page[0])
-	res.Last = getID(page[len(page)-1])
+
+	if len(page) > 0 {
+		res.First = getID(page[0])
+		res.Last = getID(page[len(page)-1])
+	} else {
+		res.Complete = true
+	}
 
 	return page, res, nil
 }
